@@ -19,7 +19,7 @@ jobs:
         dotnet-version: 5.0.x
     - name: Get current date
       id: date
-      run: echo "::set-output name=date::$(date +'%Y.%m.%d%H%m')"
+      run: echo "::set-output name=date::$(date +'%Y.%m.%d%H%M')"
     - name: Say current date
       run: echo "${{ steps.date.outputs.date }}"
     - name: Restore dependencies
