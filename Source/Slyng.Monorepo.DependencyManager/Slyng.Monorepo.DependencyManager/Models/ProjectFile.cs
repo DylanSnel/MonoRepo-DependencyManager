@@ -82,10 +82,13 @@ namespace Slyng.Monorepo.DependencyManager.Models
         }
 
         private List<string> getProjectReferences()
-        {       
-            Project project = new Project(FullPath);
+        {
+            var projectCollection = new ProjectCollection();
+
+            var project = projectCollection.LoadProject(FullPath);
             var projectReferences = project.GetItems("ProjectReference");
             return projectReferences.Select(pr => new ProjectFile(Path.GetFullPath(Path.Combine(FullDirectory, pr.EvaluatedInclude))).RelativeDirectory.Replace("\\", "/").TrimEnd('/') + "/*").Distinct().ToList();
+            
 
         }
 
