@@ -1,0 +1,14 @@
+{
+  "EnableDocker": true,
+  "DockerFileExtention": "DockerFile",
+  "AzureDevops": {
+    "Enabled": true,
+    "AutoImportBuildPipelinesOnMain": false,
+    "UpdateBuildPipelinesReferences": true,
+    "AutoImportPrPipelinesOnMain": false,
+    "UpdatePrPipelinesReferences": true,
+    "UsePrPipelinesAsBranchPolicies": true,
+    "BuildPipelinesFileExtention": "*.build.yml",
+    "PrPipelinesFileExtention": "*.pr.yml"
+  }
+}
