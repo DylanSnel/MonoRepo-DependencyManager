@@ -30,10 +30,6 @@ namespace Slyng.Monorepo.DependencyManager.Integration
             {
                 Console.WriteLine($"error: {errorInfoIfAny}");
             }
-            else
-            {
-                Console.WriteLine($"directory: {rootDirectory}");
-            }
 
             return rootDirectory.Replace("/", "\\");
         }

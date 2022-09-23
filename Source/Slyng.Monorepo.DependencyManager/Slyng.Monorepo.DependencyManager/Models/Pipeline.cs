@@ -8,10 +8,10 @@ using YamlDotNet.RepresentationModel;
 
 namespace Slyng.Monorepo.DependencyManager.Models
 {
-    public class BuildFile
+    public class Pipeline
     {
 
-        public BuildFile(string path, string projectDirectory)
+        public Pipeline(string path, string projectDirectory)
         {
             FullPath = path;
             ProjectDirectory = projectDirectory;
@@ -19,9 +19,25 @@ namespace Slyng.Monorepo.DependencyManager.Models
         public string FullPath { get; set; }
         public string ProjectDirectory { get; }
 
+        public string RelativePath
+        {
+            get
+            {
+                return FullPath.Replace(Global.RootPath, "").TrimStart('\\');
+            }
+        }
+
+        public string BuildName
+        {
+            get
+            {
+                return Path.GetFileName(FullPath).Replace(Global.Config.AzureDevops.BuildPipelinesFileExtension.Replace("*",""), "").Replace(Global.Config.AzureDevops.PrPipelinesFileExtension.Replace("*", ""), "");
+            }
+        }
+
         public void SetDependencies(List<string> depenciesPaths)
         {
-            depenciesPaths.Insert(0, ProjectDirectory.Replace("\\", "/").TrimEnd('/') + "/*");
+            //depenciesPaths.Insert(0, ProjectDirectory.Replace("\\", "/").TrimEnd('/') + "/*");
 
             YamlStream yaml = new YamlStream();
             using (var sr = new StreamReader(FullPath))

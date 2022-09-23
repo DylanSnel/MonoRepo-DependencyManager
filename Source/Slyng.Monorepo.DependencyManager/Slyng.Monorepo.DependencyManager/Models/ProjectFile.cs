@@ -17,17 +17,18 @@ namespace Slyng.Monorepo.DependencyManager.Models
         public ProjectFile(string path)
         {
             FullPath = path;
-            Console.WriteLine($"Project: {ProjectFileName}");
-            DockerFiles = FileHelper.GetFilesByType(FullDirectory, "DockerFile");
-            BuildFiles = FileHelper.GetFilesByType(FullDirectory, "*.build.yml").Select(bf => new BuildFile(bf, RelativeSolutionDirectory)).ToList();
+            ColorConsole.WriteEmbeddedColorLine($" - Project: [yellow]{ProjectFileName}[/yellow]");
+            DockerFiles = FileHelper.GetFilesByType(FullDirectory, Global.Config.DockerFileExtention);
+            BuildPipelines = FileHelper.GetFilesByType(FullDirectory, Global.Config.AzureDevops.BuildPipelinesFileExtension).Select(bp => new Pipeline(bp, RelativeSolutionDirectory)).ToList();
+            PrPipelines = FileHelper.GetFilesByType(FullDirectory, Global.Config.AzureDevops.PrPipelinesFileExtension).Select(prp => new Pipeline(prp, RelativeSolutionDirectory)).ToList();
             ProjectReferences = getProjectReferences();
         }
 
 
         public string FullPath { get; set; }
         public List<string> DockerFiles { get; private set; }
-        public List<BuildFile> BuildFiles { get; private set; }
-
+        public List<Pipeline> BuildPipelines { get; private set; }
+        public List<Pipeline> PrPipelines { get; }
         public List<string> ProjectReferences { get; private set; }
 
         public string FullDirectory
@@ -61,6 +62,9 @@ namespace Slyng.Monorepo.DependencyManager.Models
             }
         }
 
+        /// <summary>
+        /// Path relative to the solution
+        /// </summary>
         public string RelativeSolutionDirectory
         {
             get
@@ -74,66 +78,24 @@ namespace Slyng.Monorepo.DependencyManager.Models
             }
         }
 
-        public void HandleReplaceMents()
-        {
-            Console.WriteLine($"Replacing: {ProjectFileName}");
-            replaceDockerReferences();
-            replaceBuildPaths();
-        }
-
         private List<string> getProjectReferences()
         {
             var projectCollection = new ProjectCollection();
 
             var project = projectCollection.LoadProject(FullPath);
             var projectReferences = project.GetItems("ProjectReference");
-            return projectReferences.Select(pr => new ProjectFile(Path.GetFullPath(Path.Combine(FullDirectory, pr.EvaluatedInclude))).RelativeDirectory.Replace("\\", "/").TrimEnd('/') + "/*").Distinct().ToList();
-            
+            var references = projectReferences.Select(pr => new ProjectReference(Path.GetFullPath(Path.Combine(FullDirectory, pr.EvaluatedInclude))).RelativeDirectory.Replace("\\", "/").TrimEnd('/') + "/*").ToList();
+
+            references.Add(RelativeDirectory.Replace("\\", "/").TrimEnd('/') + "/*");
+
+            return references.Distinct().ToList();
 
         }
 
-        private void replaceBuildPaths()
+        public void UpdateBuildPaths()
         {
             // ProjectReferences = getProjectReferences();
-            BuildFiles.ForEach(bf => bf.SetDependencies(ProjectReferences));
+            BuildPipelines.ForEach(bf => bf.SetDependencies(ProjectReferences));
         }
-
-        private void replaceDockerReferences()
-        {
-            var replacement = new StringBuilder();
-            replacement.AppendLine($"WORKDIR /src");
-            foreach (var solution in Global.Solutions)
-            {
-                //replacement.AppendLine($"COPY [\"{solution.RelativePath.ForwardSlashes()}\", \"{solution.RelativeDirectory.ForwardSlashes()}\"]");
-                foreach (var project in solution.Projects)
-                {
-                    replacement.AppendLine($"COPY [\"{project.RelativePath.ForwardSlashes()}\", \"{project.RelativeDirectory.ForwardSlashes()}\"]");
-                }
-                // replacement.AppendLine($"");
-            }
-            replacement.AppendLine($"RUN dotnet restore \"{RelativePath.ForwardSlashes()}\"");
-            replacement.AppendLine($"COPY . .");
-            replacement.AppendLine($"WORKDIR \"/src/{RelativeDirectory.ForwardSlashes()}\"");
-
-            foreach (var dockerFile in DockerFiles)
-            {
-                var text = File.ReadAllText(dockerFile);
-                var explodedText = text.Split(new[] { "#DependencyToolGeneratedCode", "#End" }, StringSplitOptions.None);
-                if (explodedText.Length != 3)
-                {
-                    Console.WriteLine($"Error replacing dependencies in DockerFile ");
-                    continue;
-                }
-                explodedText[1] = replacement.ToString();
-
-                var newText = string.Join("", new string[] { explodedText[0], "#DependencyToolGeneratedCode", "\r\n", explodedText[1], "\r\n", "#End", explodedText[2] });
-                File.WriteAllText(dockerFile, newText);
-            }
-
-
-
-        }
-
-
     }
 }

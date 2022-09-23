@@ -7,48 +7,37 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Build.Utilities;
 using Slyng.Monorepo.DependencyManager.Helpers;
+using System.Xml;
+using System.Xml.Linq;
 
 namespace Slyng.Monorepo.DependencyManager.Models
 {
-    public class SolutionFile
+    public class ProjectReference
     {
-        public SolutionFile(string path)
+        public ProjectReference(string path)
         {
             FullPath = path;
-            ColorConsole.WriteEmbeddedColorLine($"Solution: [blue]{SolutionFileName}[/blue]");
-            Projects = FileHelper.GetFilesByType(FullDirectory, "*.csproj").Select(csproj => new ProjectFile(csproj)).ToList();
+            ColorConsole.WriteEmbeddedColorLine($"   - Reference: [DarkYellow]{ProjectFileName}[/DarkYellow]");
         }
 
 
         public string FullPath { get; set; }
-        public List<ProjectFile> Projects { get; private set; }
 
         public string FullDirectory
         {
             get
             {
-                return Path.GetDirectoryName(FullPath) + "\\";
+                return Path.GetDirectoryName(FullPath) + "\\"; ;
             }
         }
-
-        public string SolutionName
-        {
-            get
-            {
-                return SolutionFileName.Replace(".sln", "");
-            }
-        }
-
-        public string SolutionFileName
+        public string ProjectFileName
         {
             get
             {
                 return Path.GetFileName(FullPath);
             }
         }
-        /// <summary>
-        /// Relative path from the root of the repository to the solution file.
-        /// </summary>
+
         public string RelativePath
         {
             get
@@ -65,19 +54,21 @@ namespace Slyng.Monorepo.DependencyManager.Models
             }
         }
 
-        public string PipelineDirectory
+        /// <summary>
+        /// Path relative to the solution
+        /// </summary>
+        public string RelativeSolutionDirectory
         {
             get
             {
-                if (string.IsNullOrEmpty(Global.Config.AzureDevops.OmitFolderFromPipelineDirectory))
+                var directory = new DirectoryInfo(FullDirectory);
+                while (directory != null && !directory.GetFiles("*.sln").Any())
                 {
-                    return RelativeDirectory.TrimStart('\\');
+                    directory = directory.Parent;
                 }
-                return RelativeDirectory.Replace(Global.Config.AzureDevops.OmitFolderFromPipelineDirectory, "").TrimStart('\\');
+                return directory.FullName.Replace(Global.RootPath, "").TrimStart('\\');
             }
         }
-
-
 
 
     }
