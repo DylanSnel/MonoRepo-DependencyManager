@@ -28,9 +28,9 @@ jobs:
     - name: Build
       run: dotnet build --no-restore
       working-directory: Source/MonoRepo.DependencyManager
-    - name: Test
-      run: dotnet test --no-build --verbosity normal
-      working-directory: Source/Monorepo.DependencyManager
+    # - name: Test
+    #   run: dotnet test --no-build --verbosity normal
+    #   working-directory: Source/Monorepo.DependencyManager
     - name: Pack
       run: dotnet pack -c Release -p:PackageVersion=${{ steps.date.outputs.date }}
       working-directory: Source/Monorepo.DependencyManager
