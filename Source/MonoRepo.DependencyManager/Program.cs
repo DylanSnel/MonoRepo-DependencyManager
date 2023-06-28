@@ -107,7 +107,7 @@ public static class Global
     public const string ConfigFileName = ".monorepo-config";
     public static string ConfigFilePath => Path.Combine(RootPath, ConfigFileName);
 
-    public static bool IsPipeline = false;
+    public static bool IsPipeline { get; set; } = false;
 
     public static string DevopsAccessToken { get; set; } = "";
 
