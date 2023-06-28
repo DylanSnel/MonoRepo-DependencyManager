@@ -31,6 +31,10 @@ internal class InitCommand : ICommand
             ColorConsole.WriteEmbeddedColorLine("Configuration file already exists. Use --overwrite to overwrite");
             return;
         }
+        else if (File.Exists(filePath))
+        {
+            Global.Config = JsonConvert.DeserializeObject<MonorepoConfiguration>(File.ReadAllText(Global.ConfigFilePath));
+        }
 
         ConfigureBuildFiles();
 

@@ -39,7 +39,6 @@ public class ProjectFile
         get
         {
             return Path.GetDirectoryName(FullPath) + "\\";
-            ;
         }
     }
     public string ProjectFileName
