@@ -22,8 +22,12 @@ public class UpdateCommand : ICommand
             return;
         }
 
+        if (Global.Config.AzureDevops.Enabled)
+        {
+            _azureClient = new AzureDevopsClient();
+        }
 
-        _azureClient = new AzureDevopsClient();
+
         foreach (var solution in Global.Solutions)
         {
             ColorConsole.WriteEmbeddedColorLine($"Solution: [magenta]{solution.SolutionName}[/magenta]");
