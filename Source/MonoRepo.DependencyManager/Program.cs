@@ -65,7 +65,7 @@ public class Program
             Global.Config = JsonConvert.DeserializeObject<MonorepoConfiguration>(File.ReadAllText(Global.ConfigFilePath));
             Global.Solutions = FileHelper.GetFilesByType(Global.RootPath, "*.sln").Select(csproj => new SolutionFile(csproj)).ToList();
             ColorConsole.WriteEmbeddedColorLine($"Congfiguration: [Green]Found[/Green]");
-            if (Global.Config.AzureDevops.Enabled)
+            if (Global.Config.AzureDevops.Enabled && string.IsNullOrEmpty(Global.PersonalAccessToken))
             {
                 var accessToken = AzureToolChecker.GetAzureDevopsAccesToken();
                 if (accessToken.SelectToken("$..accessToken") != null)
