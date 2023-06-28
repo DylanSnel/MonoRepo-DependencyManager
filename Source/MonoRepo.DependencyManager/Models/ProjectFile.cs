@@ -1,8 +1,5 @@
 ﻿using Microsoft.Build.Construction;
 using MonoRepo.DependencyManager.Helpers;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 
 namespace MonoRepo.DependencyManager.Models;
 
@@ -32,6 +29,7 @@ public class ProjectFile
             {
 
                 references.AddRange(reference.BuildProjectReferences);
+                references.AddRange(Global.Config.BuildFiles.AdditionalPipelinesTriggerPaths);
             }
             return references.Distinct().Order().ToList();
         }

@@ -20,7 +20,6 @@ public class Program
             try
             {
 #endif
-
                 if (args.Contains("--pipeline") || args.Contains("-p"))
                 {
                     Global.IsPipeline = true;
@@ -54,7 +53,7 @@ public class Program
         ColorConsole.WriteEmbeddedColorLine($"Current branch: [Blue]{Global.CurrentBranch}[/Blue]");
         Global.Solutions = FileHelper.GetFilesByType(Global.RootPath, "*.sln").Select(csproj => new SolutionFile(csproj)).ToList();
         ColorConsole.WriteEmbeddedColorLine($"Found [magenta]{Global.Solutions.Count}[/magenta] Solutions");
-        //ColorConsole.WriteEmbeddedColorLine($"Found [yellow]{Global.Solutions.SelectMany(x => x.Projects).SelectMany(x => x.ProjectReferences).DistinctBy(x => x.FullPath).Count()}[/yellow] Projects");
+        ColorConsole.WriteEmbeddedColorLine($"Found [yellow]{Global.Solutions.SelectMany(x => x.Projects).SelectMany(x => x.ProjectReferences).DistinctBy(x => x.FullPath).Count()}[/yellow] Projects");
         ColorConsole.WriteEmbeddedColorLine("");
     }
 
