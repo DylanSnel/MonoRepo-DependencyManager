@@ -14,7 +14,7 @@ public class UpdateCommand : ICommand
     [Option('v', "verbose", Required = false, HelpText = "Verbose", Default = false)]
     public bool Verbose { get; set; }
 
-    [Option('t', "pat", Required = false, HelpText = "Personal Access Token", Default = false)]
+    [Option('t', "pat", Required = false, HelpText = "Personal Access Token", Default = null)]
     public string? AccessToken { get; set; }
 
     public void Execute()
