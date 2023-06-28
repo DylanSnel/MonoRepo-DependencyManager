@@ -85,21 +85,23 @@ internal class InitCommand : ICommand
             _config.BuildFiles.PolicyPipelinesFileExtension = Cli.AskFor<string>("What is the extension of your [red]Policy Pipelines[/red]?", _config.BuildFiles.PolicyPipelinesFileExtension);
         }
 
+        string additionalTriggerPaths;
+        while ((additionalTriggerPaths = Cli.AskFor<string>("You you want to add an additional paths to the triggers?  [Leave empty to continue]")) != string.Empty)
+        {
+            additionalTriggerPaths = additionalTriggerPaths.Replace('\\', '/').TrimEnd('/');
+            _config.BuildFiles.AdditionalPipelinesTriggerPaths.Add($"{(additionalTriggerPaths.StartsWith("/") ? "" : "/")}{additionalTriggerPaths}{(additionalTriggerPaths.EndsWith("*") ? "" : "/*")}");
+        }
+        _config.BuildFiles.AdditionalPipelinesTriggerPaths = _config.BuildFiles.AdditionalPipelinesFileExtension.Distinct().ToList();
+
         string additionalPipelines;
-        while ((additionalPipelines = Cli.AskFor<string>("You you want to add an additional file extensions to include that do not fall under a project?  [Leave empty to continue]")) != string.Empty)
+        while ((additionalPipelines = Cli.AskFor<string>("You you want to add an additional file extensions to include that do not fall under a project? ( *.<MyExtension>.yaml ) [Leave empty to continue]")) != string.Empty)
         {
             _config.BuildFiles.AdditionalPipelinesFileExtension.Add($"{(additionalPipelines.StartsWith("*.") ? "" : "*.")}{additionalPipelines}");
         }
         _config.BuildFiles.AdditionalPipelinesFileExtension = _config.BuildFiles.AdditionalPipelinesFileExtension.Distinct().ToList();
 
 
-        string additionalTriggerPaths;
-        while ((additionalTriggerPaths = Cli.AskFor<string>("You you want to add an additional file extensions to include that do not fall under a project? ( *.<MyExtension>.yaml ) [Leave empty to continue]")) != string.Empty)
-        {
-            additionalTriggerPaths = additionalTriggerPaths.Replace('\\', '/').TrimEnd('/');
-            _config.BuildFiles.AdditionalPipelinesTriggerPaths.Add($"{(additionalTriggerPaths.StartsWith("/") ? "" : "/")}{additionalTriggerPaths}{(additionalTriggerPaths.EndsWith("*") ? "" : "/*")}");
-        }
-        _config.BuildFiles.AdditionalPipelinesTriggerPaths = _config.BuildFiles.AdditionalPipelinesFileExtension.Distinct().ToList();
+
     }
 
     private void ConfigureAzureDevopsConnection()
