@@ -54,7 +54,7 @@ public class Program
         ColorConsole.WriteEmbeddedColorLine($"Current branch: [Blue]{Global.CurrentBranch}[/Blue]");
         Global.Solutions = FileHelper.GetFilesByType(Global.RootPath, "*.sln").Select(csproj => new SolutionFile(csproj)).ToList();
         ColorConsole.WriteEmbeddedColorLine($"Found [magenta]{Global.Solutions.Count}[/magenta] Solutions");
-        ColorConsole.WriteEmbeddedColorLine($"Found [yellow]{Global.Solutions.SelectMany(x => x.Projects).SelectMany(x => x.ProjectReferences).DistinctBy(x => x.FullPath).Count()}[/yellow] Projects");
+        //ColorConsole.WriteEmbeddedColorLine($"Found [yellow]{Global.Solutions.SelectMany(x => x.Projects).SelectMany(x => x.ProjectReferences).DistinctBy(x => x.FullPath).Count()}[/yellow] Projects");
         ColorConsole.WriteEmbeddedColorLine("");
     }
 
@@ -64,26 +64,30 @@ public class Program
         {
             Global.Config = JsonConvert.DeserializeObject<MonorepoConfiguration>(File.ReadAllText(Global.ConfigFilePath));
             ColorConsole.WriteEmbeddedColorLine($"Congfiguration: [Green]Found[/Green]");
-            var accessToken = AzureToolChecker.GetAzureDevopsAccesToken();
-            if (accessToken.SelectToken("$..accessToken") != null)
+            if (Global.Config.AzureDevops.Enabled)
             {
-                ColorConsole.WriteEmbeddedColorLine("Azure devops access token: [blue]Received token[/blue]");
-                Global.DevopsAccessToken = accessToken.SelectToken("$..accessToken").ToString();
-                return true;
-            }
-            else
-            {
-                ColorConsole.WriteEmbeddedColorLine("Azure devops access token: [red]No token recieved[/red]");
-                if (Global.IsPipeline)
+                var accessToken = AzureToolChecker.GetAzureDevopsAccesToken();
+                if (accessToken.SelectToken("$..accessToken") != null)
                 {
-                    throw new Exception("Could not retrieve an access token");
+                    ColorConsole.WriteEmbeddedColorLine("Azure devops access token: [blue]Received token[/blue]");
+                    Global.DevopsAccessToken = accessToken.SelectToken("$..accessToken").ToString();
+                    return true;
                 }
                 else
                 {
-                    ColorConsole.WriteEmbeddedColorLine($"Please run \"check\" command first");
-                    return false;
+                    ColorConsole.WriteEmbeddedColorLine("Azure devops access token: [red]No token recieved[/red]");
+                    if (Global.IsPipeline)
+                    {
+                        throw new Exception("Could not retrieve an access token");
+                    }
+                    else
+                    {
+                        ColorConsole.WriteEmbeddedColorLine($"Please run \"check\" command first");
+                        return false;
+                    }
                 }
             }
+            return true;
         }
         else
         {
