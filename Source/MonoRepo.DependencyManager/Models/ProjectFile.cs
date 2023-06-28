@@ -27,9 +27,7 @@ public class ProjectFile
             references.Add(RelativeDirectory.Replace("\\", "/").TrimEnd('/') + "/*");
             foreach (var reference in ProjectReferences)
             {
-
                 references.AddRange(reference.BuildProjectReferences);
-
             }
             references.AddRange(Global.Config.BuildFiles.AdditionalPipelinesTriggerPaths);
             return references.Distinct().Order().ToList();
