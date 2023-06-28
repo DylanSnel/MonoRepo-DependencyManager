@@ -12,7 +12,7 @@ public class ProjectTreeCommand : ICommand
     {
         foreach (var solution in Global.Solutions)
         {
-            ColorConsole.WriteEmbeddedColorLine($"Solution: [blue]{solution.SolutionName}[/blue]");
+            ColorConsole.WriteEmbeddedColorLine($"Solution: [magenta]{solution.SolutionName}[/magenta]");
             PrintProjects(solution.Projects, 1);
         }
 

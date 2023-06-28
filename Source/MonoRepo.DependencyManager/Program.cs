@@ -17,10 +17,16 @@ public class Program
         while (true)
         {
             args = Console.ReadLine().Split(' ');
-#endif
             try
             {
-                Console.WriteLine(string.Join(',', args));
+#endif
+
+                if (args.Contains("--pipeline") || args.Contains("-p"))
+                {
+                    Global.IsPipeline = true;
+                    args = args.Except(new[] { "--pipeline", "-p" }).ToArray();
+                }
+
                 Initialize();
 
                 Parser.Default.ParseArguments<InitCommand, UpdateCommand, CheckDevopsPermissionsCommand, ProjectTreeCommand>(args)
@@ -28,48 +34,72 @@ public class Program
                     .WithParsed<UpdateCommand>(t => t.Execute())
                     .WithParsed<ProjectTreeCommand>(t => t.Execute())
                     .WithParsed<CheckDevopsPermissionsCommand>(t => t.Execute());
+
+#if DEBUG
             }
             catch (Exception ex)
             {
                 ColorConsole.WriteEmbeddedColorLine(ex.Message);
             }
-#if DEBUG
             ColorConsole.WriteEmbeddedColorLine("=======================================================");
         }
 #endif
 
     }
 
-    private static void Initialize()
+    public static void Initialize()
     {
         Global.RootPath = GitLogic.GetRootPath();
         Global.CurrentBranch = GitLogic.GetCurrentBranch();
-        ColorConsole.WriteEmbeddedColorLine($"Using [Green]{Global.RootPath}[/Green] as the base directory of the repository");
-        ColorConsole.WriteEmbeddedColorLine($"Currentbranch [Blue]{Global.CurrentBranch}[/Blue] as the current branch");
-        ColorConsole.WriteEmbeddedColorLine("");
-        if (File.Exists(Global.ConfigFilePath))
-        {
-            Global.Config = JsonConvert.DeserializeObject<MonorepoConfiguration>(File.ReadAllText(Global.ConfigFilePath));
-            ColorConsole.WriteEmbeddedColorLine($"Configuration Found");
-            ColorConsole.WriteEmbeddedColorLine("");
-            ColorConsole.WriteEmbeddedColor("Checking if we can get an [cyan]access token[/cyan]: ");
-            var accessToken = AzureToolChecker.GetAzureDevopsAccesToken();
-            if (accessToken.SelectToken("$..accessToken") != null)
-            {
-                ColorConsole.WriteEmbeddedColorLine("[yellow]Token found[/yellow]");
-                Global.DevopsAccessToken = accessToken.SelectToken("$..accessToken").ToString();
-            }
-            else
-            {
-                ColorConsole.WriteEmbeddedColorLine("[red]Access token is not found[/red]");
-                throw new Exception("Access token is not found");
-            }
-        }
-
+        ColorConsole.WriteEmbeddedColorLine($"Repository Root: [Green]{Global.RootPath}[/Green]");
+        ColorConsole.WriteEmbeddedColorLine($"Current branch: [Blue]{Global.CurrentBranch}[/Blue]");
         Global.Solutions = FileHelper.GetFilesByType(Global.RootPath, "*.sln").Select(csproj => new SolutionFile(csproj)).ToList();
+        ColorConsole.WriteEmbeddedColorLine($"Found [magenta]{Global.Solutions.Count}[/magenta] Solutions");
+        ColorConsole.WriteEmbeddedColorLine($"Found [yellow]{Global.Solutions.SelectMany(x => x.Projects).SelectMany(x => x.ProjectReferences).DistinctBy(x => x.FullPath).Count()}[/yellow] Projects");
         ColorConsole.WriteEmbeddedColorLine("");
     }
 
+    public static bool CheckForConfiguration()
+    {
+        if (File.Exists(Global.ConfigFilePath))
+        {
+            Global.Config = JsonConvert.DeserializeObject<MonorepoConfiguration>(File.ReadAllText(Global.ConfigFilePath));
+            ColorConsole.WriteEmbeddedColorLine($"Congfiguration: [Green]Found[/Green]");
+            var accessToken = AzureToolChecker.GetAzureDevopsAccesToken();
+            if (accessToken.SelectToken("$..accessToken") != null)
+            {
+                ColorConsole.WriteEmbeddedColorLine("Azure devops access token: [blue]Received token[/blue]");
+                Global.DevopsAccessToken = accessToken.SelectToken("$..accessToken").ToString();
+                return true;
+            }
+            else
+            {
+                ColorConsole.WriteEmbeddedColorLine("Azure devops access token: [red]No token recieved[/red]");
+                if (Global.IsPipeline)
+                {
+                    throw new Exception("Could not retrieve an access token");
+                }
+                else
+                {
+                    ColorConsole.WriteEmbeddedColorLine($"Please run \"check\" command first");
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            ColorConsole.WriteEmbeddedColorLine($"Congfiguration: [red]Not found[/red]");
+            if (Global.IsPipeline)
+            {
+                throw new Exception("Configuration file is not found");
+            }
+            else
+            {
+                ColorConsole.WriteEmbeddedColorLine($"Please run \"init\" command first");
+                return false;
+            }
+        }
+    }
 }
 
 public static class Global
@@ -77,6 +107,7 @@ public static class Global
     public const string ConfigFileName = ".monorepo-config";
     public static string ConfigFilePath => Path.Combine(RootPath, ConfigFileName);
 
+    public static bool IsPipeline = false;
 
     public static string DevopsAccessToken { get; set; } = "";
 

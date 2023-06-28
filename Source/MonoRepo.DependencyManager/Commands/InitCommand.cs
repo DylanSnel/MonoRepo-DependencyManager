@@ -65,7 +65,7 @@ internal class InitCommand : ICommand
         if (Docker.Value)
         {
             _config.Docker.Enabled = true;
-            _config.Docker.DockerFileExtension = Cli.AskFor<string>("What is the extention of your docker files?", _config.Docker.DockerFileExtension);
+            _config.Docker.DockerFileExtension = Cli.AskFor<string>("What is the extention of your [DarkGreen]Docker Files[/DarkGreen]?", _config.Docker.DockerFileExtension);
         }
     }
 
@@ -84,6 +84,13 @@ internal class InitCommand : ICommand
         {
             _config.BuildFiles.PolicyPipelinesFileExtension = Cli.AskFor<string>("What is the extension of your [red]Policy Pipelines[/red]?", _config.BuildFiles.PolicyPipelinesFileExtension);
         }
+
+        string additionalPipelines;
+        while ((additionalPipelines = Cli.AskFor<string>("You you want to add an additional policy branch? ( *.<MyExtension>.yaml ) [Leave empty to continue]")) != string.Empty)
+        {
+            _config.BuildFiles.AdditionalPipelinesFileExtension.Add($"{(additionalPipelines.StartsWith("*.") ? "" : "*.")}{additionalPipelines}");
+        }
+        _config.BuildFiles.AdditionalPipelinesFileExtension = _config.BuildFiles.AdditionalPipelinesFileExtension.Distinct().ToList();
     }
 
     private void ConfigureAzureDevopsConnection()
@@ -151,6 +158,8 @@ internal class InitCommand : ICommand
         {
             _config.AzureDevops.Settings.PolicyBranches.Add($"{(additionalBranch.StartsWith("refs/heads/") ? "" : "refs/heads/")}{additionalBranch}");
         }
+        _config.AzureDevops.Settings.PolicyBranches = _config.AzureDevops.Settings.PolicyBranches.Distinct().ToList();
+
         _config.AzureDevops.Settings.AutoImportBuildPipelines = Cli.Confirm("Do you want to automatically import [DarkRed]Build Pipelines[/DarkRed]?", _config.AzureDevops.Settings.AutoImportBuildPipelines);
         if (_config.AzureDevops.Settings.AutoImportBuildPipelines)
         {

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.Text;
 using YamlDotNet.RepresentationModel;
 
 namespace MonoRepo.DependencyManager.Models;
@@ -41,6 +39,14 @@ public class Pipeline
         get
         {
             return Path.GetFileName(FullPath).Replace(Global.Config.BuildPipelinesFileExtension.Replace("*", ""), "").Replace(Global.Config.PolicyPipelinesFileExtension.Replace("*", ""), "");
+        }
+    }
+
+    public string ExtensionName
+    {
+        get
+        {
+            return Path.GetFileNameWithoutExtension(FullPath).Split(".")[1] ?? "";
         }
     }
 

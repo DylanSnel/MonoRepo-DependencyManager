@@ -9,9 +9,6 @@ using MonoRepo.DependencyManager.Helpers;
 using MonoRepo.DependencyManager.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.Serialization;
 
 namespace MonoRepo.DependencyManager.Integration;
@@ -57,7 +54,10 @@ internal class AzureDevopsClient
         _queues = GetAgentPool();
     }
     public T GetClient<T>() where T : VssHttpClientBase
-        => Connection.GetClient<T>();
+    {
+        ResetConnection();
+        return Connection.GetClient<T>();
+    }
     public List<TeamProjectReference> GetProjects()
     {
         using var gitClient = GetClient<ProjectHttpClient>();
@@ -156,7 +156,7 @@ internal class AzureDevopsClient
     //    }
     //}
 
-    public void CreateNewPolicy(ProjectFile project, Pipeline buildFile)
+    public (bool, bool) CreateOrUpdatePolicy(ProjectFile project, Pipeline buildFile, string branch, bool required)
     {
         var build = _builds.FirstOrDefault(b => ((YamlProcess)b.Process).YamlFilename == buildFile.RelativePath.ForwardSlashes());
         if (build != null)
@@ -164,12 +164,12 @@ internal class AzureDevopsClient
             try
             {
                 using var policyClient = GetClient<PolicyHttpClient>();
-                var policy = _policies.FirstOrDefault(p => p.Settings.Value<int>("buildDefinitionId") == build.Id);
+                var policy = _policies.FirstOrDefault(p => p.Settings.Value<int>("buildDefinitionId") == build.Id && p.Settings.SelectToken("$..refName").ToString() == branch);
                 if (policy == null)
                 {
                     var scope = new Dictionary<string, object>()
                                                 {
-                                                    {"refName", _repository.DefaultBranch},
+                                                    {"refName", branch},
                                                     {"matchKind", "Exact"},
                                                     {"repositoryId", _repository.Id},
                                                 };
@@ -179,9 +179,9 @@ internal class AzureDevopsClient
                                                     { "buildDefinitionId", build.Id },
                                                     { "queueOnSourceUpdateOnly", true },
                                                     { "manualQueueOnly", false },
-                                                    { "displayName", $"{buildFile.BuildName} - PR"},
+                                                    { "displayName", build.Name},
                                                     { "validDuration", 720.0d },
-                                                    { "filenamePatterns", project.ProjectReferences.Select(x=> $"/{x}") },
+                                                    { "filenamePatterns", project.BuildProjectReferences.Select(x=> $"/{x}") },
                                                     { "scope", new [] {scope } }
                                                 });
 
@@ -192,18 +192,17 @@ internal class AzureDevopsClient
                         {
                             Id = _buildPolicyType
                         },
-                        IsBlocking = true,
+                        IsBlocking = required,
                         Settings = settings,
-
                     };
-                    policyClient.CreatePolicyConfigurationAsync(policy, Global.Config.AzureDevops.ProjectName).Wait();
-                    ColorConsole.WriteEmbeddedColorLine($"   - Add branch Policy: [DarkGreen]{buildFile.BuildName}[/DarkGreen] - [green]Complete[/green]");
+                    policyClient.CreatePolicyConfigurationAsync(policy, Global.Config.AzureDevops.ProjectName).GetAwaiter().GetResult();
+                    return (true, policy.IsBlocking);
                 }
                 else
                 {
                     var scope = new Dictionary<string, object>()
                                                 {
-                                                    {"refName", _repository.DefaultBranch},
+                                                    {"refName", branch},
                                                     {"matchKind", "Exact"},
                                                     {"repositoryId", _repository.Id},
                                                 };
@@ -212,27 +211,35 @@ internal class AzureDevopsClient
                                                     { "buildDefinitionId", build.Id },
                                                     { "queueOnSourceUpdateOnly", true },
                                                     { "manualQueueOnly", false },
-                                                    { "displayName", $"{buildFile.BuildName} - PR"},
+                                                    { "displayName", build.Name},
                                                     { "validDuration", 720.0d },
-                                                    { "filenamePatterns", project.ProjectReferences.Select(x=> $"/{x}") },
+                                                    { "filenamePatterns", project.BuildProjectReferences.Select(x=> $"/{x}") },
                                                     { "scope", new [] {scope } }
                                                 });
                     policy.Settings = settings;
+                    if (!policy.IsBlocking)
+                    {
+                        policy.IsBlocking = required;
+                    }
 
-                    policyClient.UpdatePolicyConfigurationAsync(policy, Global.Config.AzureDevops.ProjectName, policy.Id).Wait();
+                    policyClient.UpdatePolicyConfigurationAsync(policy, Global.Config.AzureDevops.ProjectName, policy.Id).GetAwaiter().GetResult();
 
-                    ColorConsole.WriteEmbeddedColorLine($"   - Branch Policy: [DarkGreen]{buildFile.BuildName}[/DarkGreen] - [yellow]Policy Updated[/yellow]");
+                    return (false, policy.IsBlocking);
                 }
             }
             catch (Exception ex)
             {
                 ColorConsole.WriteEmbeddedColorLine($"Failed to create policy: [red]{buildFile.BuildName}[/red]");
-                ColorConsole.WriteEmbeddedColorLine(ex.Message, ConsoleColor.Red);
+                throw;
             }
+        }
+        else
+        {
+            throw new Exception($"Build definition not found for: {buildFile.BuildName}");
         }
     }
 
-    public bool CreatBuildDefinition(SolutionFile solution, Pipeline buildFile, string name, List<string> projectReferences)
+    public bool CreateOrUpdateBuildDefinition(SolutionFile solution, Pipeline buildFile, string name, List<string> projectReferences)
     {
         using var buildClient = GetClient<BuildHttpClient>();
         var build = _builds.FirstOrDefault(b => ((YamlProcess)b.Process).YamlFilename == buildFile.RelativePath.ForwardSlashes());
@@ -247,7 +254,6 @@ internal class AzureDevopsClient
                     Process = new YamlProcess()
                     {
                         YamlFilename = buildFile.RelativePath.ForwardSlashes(),
-
                     },
                     Repository = new BuildRepository()
                     {
@@ -277,10 +283,14 @@ internal class AzureDevopsClient
                 ColorConsole.WriteEmbeddedColorLine($"Failed to create build pipeline: [red]{buildFile.RelativePath}[/red]");
                 throw;
             }
-
         }
         else
         {
+            if (build.Name != name)
+            {
+                build.Name = name;
+                buildClient.UpdateDefinitionAsync(build, Global.Config.AzureDevops.ProjectName, build.Id).Wait();
+            }
             return false;
         }
     }

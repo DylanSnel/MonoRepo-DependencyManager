@@ -50,7 +50,7 @@ internal class CheckDevopsPermissionsCommand : ICommand
         else
         {
             ColorConsole.WriteEmbeddedColorLine("[red]Azure Devops Cli is not installed[/red]");
-            var install = Cli.Confirm("Do you want to install Azure Devops Cli?");
+            var install = !Global.IsPipeline && Cli.Confirm("Do you want to install Azure Devops Cli?");
             if (install)
             {
                 AzureToolChecker.InstallAzureDevOpsCli();

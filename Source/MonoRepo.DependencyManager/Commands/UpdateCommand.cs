@@ -17,10 +17,16 @@ public class UpdateCommand : ICommand
     public void Execute()
     {
 
+        if (!Program.CheckForConfiguration())
+        {
+            return;
+        }
+
+
         _azureClient = new AzureDevopsClient();
         foreach (var solution in Global.Solutions)
         {
-            ColorConsole.WriteEmbeddedColorLine($"Solution: [blue]{solution.SolutionName}[/blue]");
+            ColorConsole.WriteEmbeddedColorLine($"Solution: [magenta]{solution.SolutionName}[/magenta]");
             UpdateProjects(solution, solution.Projects, 1);
         }
 
@@ -39,6 +45,22 @@ public class UpdateCommand : ICommand
                 ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)} - Project: [yellow]{project.ProjectFileName}[/yellow]");
             }
 
+            if (project.DockerFiles.Any())
+            {
+                ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}   - Docker Files: ");
+                foreach (var dockerFile in project.DockerFiles)
+                {
+                    if (DockerLogic.ReplaceDockerReferences(project, dockerFile))
+                    {
+                        ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}     [DarkGreen]{Path.GetFileName(dockerFile)}[/DarkGreen]: [green]Updated[/green]");
+                    }
+                    else
+                    {
+                        ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}     [DarkGreen]{Path.GetFileName(dockerFile)}[/DarkGreen]: [red]Failed[/red]");
+                    }
+                }
+            }
+
             foreach (var pipeline in project.BuildPipelines)
             {
                 ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}   - Build Pipeline: [DarkRed]{pipeline.FileName}[/DarkRed]");
@@ -50,46 +72,56 @@ public class UpdateCommand : ICommand
 
                 if (Global.Config.AzureDevops.Enabled && Global.Config.AzureDevops.Settings.AutoImportBuildPipelines)
                 {
-                    var result = _azureClient.CreatBuildDefinition(solution, pipeline, $"{pipeline.BuildName} - Build", project.BuildProjectReferences);
+                    var result = _azureClient.CreateOrUpdateBuildDefinition(solution, pipeline, $"{pipeline.BuildName} - {pipeline.ExtensionName}", project.BuildProjectReferences);
                     ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}     - {(result ? "Pipeline imported" : "Already imported")}");
                 }
 
                 if (Global.Config.AzureDevops.Enabled && !Global.Config.BuildFiles.UseSeparatePolicyPipelines)
                 {
+                    var branch = $"refs/heads/{Global.CurrentBranch}";
+                    var required = Global.Config.AzureDevops.Settings.MainBranch == branch;
+                    CreateOrUpdatePolicy(level, project, pipeline, required, Global.Config.AzureDevops.Settings.MainBranch);
 
-
-                    //var result = _azureClient.CreateNewPolicy(solution, pipeline, $"{pipeline.BuildName} - Build", project.BuildProjectReferences);
-                    //ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}     - {(result ? "Pipeline imported" : "Already imported")}");
+                    foreach (var policyBranch in Global.Config.AzureDevops.Settings.PolicyBranches)
+                    {
+                        CreateOrUpdatePolicy(level, project, pipeline, required, policyBranch);
+                    }
                 }
             }
 
-            //foreach (var pipeline in project.BuildPipelines)
-            //{
-            //    ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}   - Build Pipeline: [DarkRed]{pipeline.FileName}[/DarkRed]");
-            //    if (Global.Config.BuildFiles.Enabled)
-            //    {
-            //        pipeline.SetDependencies(project.BuildProjectReferences);
-            //        ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}     - References Updated");
-            //    }
+            if (Global.Config.BuildFiles.UseSeparatePolicyPipelines)
+            {
+                foreach (var pipeline in project.PolicyPipelines)
+                {
+                    ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}   - Policy Pipeline: [DarkBlue]{pipeline.FileName}[/DarkBlue]");
 
-            //    if (Global.Config.AzureDevops.Enabled && Global.Config.AzureDevops.Settings.AutoImportBuildPipelines)
-            //    {
-            //        var result = _azureClient.CreatBuildDefinition(solution, pipeline, $"{pipeline.BuildName} - Build", project.BuildProjectReferences);
-            //        ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}     - {(result ? "Pipeline imported" : "Already imported")}");
-            //    }
-            //}
+                    if (Global.Config.AzureDevops.Enabled && Global.Config.AzureDevops.Settings.AutoImportPolicyPipelines)
+                    {
+                        var result = _azureClient.CreateOrUpdateBuildDefinition(solution, pipeline, $"{pipeline.BuildName} - {pipeline.ExtensionName}", project.BuildProjectReferences);
+                        ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}     - {(result ? "Pipeline imported" : "Already imported")}");
+                    }
 
-            //if (Global.Config.AzureDevops.Enabled && Global.Config.AzureDevops.Settings.AutoImportBuildPipelines)
-            //{
-            //    var result = _azureClient.CreatBuildDefinition(solution, pipeline, $"{pipeline.BuildName} - Policy", project.BuildProjectReferences);
-            //    ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}     - {(result ? "Policy Pipeline imported" : "Already imported")}");
-            //}
+                    if (Global.Config.AzureDevops.Enabled && Global.Config.BuildFiles.UseSeparatePolicyPipelines)
+                    {
+                        var branch = $"refs/heads/{Global.CurrentBranch}";
+                        var required = Global.Config.AzureDevops.Settings.MainBranch == branch;
+                        CreateOrUpdatePolicy(level, project, pipeline, required, Global.Config.AzureDevops.Settings.MainBranch);
 
-            project.DockerFiles.ForEach(dockerfile => ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}   - Dockerfile: [DarkGreen]{Path.GetFileName(dockerfile)}[/DarkGreen]"));
-            project.BuildPipelines.ForEach(bp => ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}   - Build Pipeline: [DarkRed]{bp.FileName}[/DarkRed]"));
-            project.PolicyPipelines.ForEach(prp => ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}   - Policy Pipeline: [DarkBlue]{prp.FileName}[/DarkBlue]"));
+                        foreach (var policyBranch in Global.Config.AzureDevops.Settings.PolicyBranches)
+                        {
+                            CreateOrUpdatePolicy(level, project, pipeline, required, policyBranch);
+                        }
+                    }
+                }
+            }
             UpdateProjects(solution, project.ProjectReferences, level + 1);
-
         }
+    }
+
+    private bool CreateOrUpdatePolicy(int level, ProjectFile project, Pipeline pipeline, bool required, string policyBranch)
+    {
+        var result = _azureClient.CreateOrUpdatePolicy(project, pipeline, policyBranch, required);
+        ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}     - {policyBranch.Replace("refs/heads/", "")} {(result.Item1 ? "Policy Applied" : "Policy Updated")} {(result.Item2 ? "Required" : "Optional")}");
+        return result.Item1;
     }
 }
