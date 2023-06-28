@@ -21,6 +21,7 @@ public class UpdateCommand : ICommand
     {
         if (!string.IsNullOrEmpty(AccessToken))
         {
+            Console.WriteLine($"Using personal accesstoken");
             Global.PersonalAccessToken = AccessToken;
         }
 

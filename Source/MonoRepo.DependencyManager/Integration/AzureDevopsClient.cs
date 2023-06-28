@@ -32,7 +32,6 @@ internal class AzureDevopsClient
     {
         if (!string.IsNullOrEmpty(Global.PersonalAccessToken) && !string.IsNullOrEmpty(Global.Config.AzureDevops.AzureDevopsUrl))
         {
-            Console.WriteLine($"Using personal accesstoken {Global.PersonalAccessToken}");
             var creds = new VssBasicCredential(string.Empty, Global.PersonalAccessToken);
             _connection = new VssConnection(new Uri(Global.Config.AzureDevops.AzureDevopsUrl), creds);
         }
@@ -113,63 +112,6 @@ internal class AzureDevopsClient
         using var policyClient = GetClient<PolicyHttpClient>();
         return policyClient.GetPolicyConfigurationsAsync(project: Global.Config.AzureDevops.ProjectName, null, _buildPolicyType).Result;
     }
-
-    //public void Update()
-    //{
-
-    //    ColorConsole.WriteEmbeddedColorLine("");
-    //    ColorConsole.WriteEmbeddedColorLine($"[green]Updating Azure Devops[/green]");
-    //    foreach (var solution in Global.Solutions)
-    //    {
-    //        ColorConsole.WriteEmbeddedColorLine($"Solution: [blue]{solution.SolutionFileName}[/blue]");
-    //        foreach (var project in solution.Projects)
-    //        {
-    //            ColorConsole.WriteEmbeddedColorLine($" - Project: [yellow]{project.ProjectFileName}[/yellow]");
-    //            try
-    //            {
-    //                if (_configuration.UpdateBuildPipelinesReferences)
-    //                {
-    //                    if (project.BuildPipelines.Any())
-    //                    {
-    //                        project.UpdateBuildPaths();
-    //                        ColorConsole.WriteEmbeddedColorLine($"   - [darkyellow]Updating BuildPaths[/darkyellow] - [green]Complete[/green]");
-    //                    }
-    //                }
-
-    //                if (_configuration.AutoImportBuildPipelines)
-    //                {
-    //                    foreach (var buildFile in project.BuildPipelines)
-    //                    {
-    //                        CreatBuildDefinition(solution, buildFile, $"{buildFile.BuildName} - Build", project.ProjectReferences);
-    //                    }
-    //                }
-
-    //                if (_configuration.AutoImportPrPipelines)
-    //                {
-    //                    foreach (var buildFile in project.PrPipelines)
-    //                    {
-    //                        CreatBuildDefinition(solution, buildFile, $"{buildFile.BuildName} - PullRequest", project.ProjectReferences);
-    //                    }
-    //                }
-
-    //                _builds = GetAllBuilds();
-
-    //                if (_configuration.Devops.UsePrPipelinesAsBranchPolicies)
-    //                {
-    //                    foreach (var buildFile in project.PrPipelines)
-    //                    {
-    //                        CreateNewPolicy(project, buildFile);
-    //                    }
-    //                }
-
-    //            }
-    //            catch (Exception ex)
-    //            {
-    //                ColorConsole.WriteEmbeddedColorLine($"Error: [red]{ex.Message}[/red]");
-    //            }
-    //        }
-    //    }
-    //}
 
     public (bool, bool) CreateOrUpdatePolicy(ProjectFile project, Pipeline buildFile, string branch, bool required)
     {
