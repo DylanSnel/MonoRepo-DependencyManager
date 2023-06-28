@@ -71,7 +71,7 @@ internal class InitCommand : ICommand
 
     private void ConfigureBuildFiles()
     {
-        _config.BuildFiles.BuildPipelinesFileExtension = Cli.AskFor<string>("What is the extension of your [DarkRed]Build Pipelines[/DarkRed]?", _config.BuildFiles.BuildPipelinesFileExtension);
+        _config.BuildPipelinesFileExtension = Cli.AskFor<string>("What is the extension of your [DarkRed]Build Pipelines[/DarkRed]?", _config.BuildPipelinesFileExtension);
 
         if (!BuildFiles.HasValue)
         {
@@ -82,7 +82,7 @@ internal class InitCommand : ICommand
         _config.BuildFiles.UseSeparatePolicyPipelines = Cli.Confirm("Do you want to use different [red]Policy Pipelines[/red]?", _config.BuildFiles.UseSeparatePolicyPipelines);
         if (_config.BuildFiles.UseSeparatePolicyPipelines)
         {
-            _config.BuildFiles.PolicyPipelinesFileExtension = Cli.AskFor<string>("What is the extension of your [red]Policy Pipelines[/red]?", _config.BuildFiles.PolicyPipelinesFileExtension);
+            _config.PolicyPipelinesFileExtension = Cli.AskFor<string>("What is the extension of your [red]Policy Pipelines[/red]?", _config.PolicyPipelinesFileExtension);
         }
 
         string additionalTriggerPaths;
