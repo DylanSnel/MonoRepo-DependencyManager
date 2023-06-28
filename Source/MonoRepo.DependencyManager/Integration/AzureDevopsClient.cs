@@ -33,6 +33,7 @@ internal class AzureDevopsClient
     {
         if (!string.IsNullOrEmpty(Global.PersonalAccessToken) && !string.IsNullOrEmpty(Global.Config.AzureDevops.AzureDevopsUrl))
         {
+            Console.WriteLine($"Using personal accesstoken {Global.PersonalAccessToken}");
             var creds = new VssBasicCredential(string.Empty, Global.PersonalAccessToken);
             _connection = new VssConnection(new Uri(Global.Config.AzureDevops.AzureDevopsUrl), creds);
         }
