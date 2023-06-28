@@ -44,7 +44,6 @@ public class Program
             ColorConsole.WriteEmbeddedColorLine("=======================================================");
         }
 #endif
-
     }
 
     public static void Initialize()
