@@ -22,8 +22,7 @@ internal class AzureDevopsClient
         {
             if (_connection == null)
             {
-                var creds = new VssOAuthAccessTokenCredential(Global.DevopsAccessToken);
-                _connection = new VssConnection(new Uri(Global.Config.AzureDevops.AzureDevopsUrl), creds);
+                ResetConnection();
             }
             return _connection;
         }
