@@ -93,8 +93,8 @@ internal class InitCommand : ICommand
         string additionalTriggerPaths;
         while ((additionalTriggerPaths = Cli.AskFor<string>("You you want to add an additional paths to the triggers?  [Leave empty to continue]")) != string.Empty)
         {
-            additionalTriggerPaths = additionalTriggerPaths.Replace('\\', '/').TrimEnd('/');
-            _config.BuildFiles.AdditionalPipelinesTriggerPaths.Add($"{(additionalTriggerPaths.StartsWith("/") ? "" : "/")}{additionalTriggerPaths}{(additionalTriggerPaths.EndsWith("*") ? "" : "/*")}");
+            additionalTriggerPaths = additionalTriggerPaths.ForwardSlashes().TrimEnd('/').TrimStart('/');
+            _config.BuildFiles.AdditionalPipelinesTriggerPaths.Add($"{additionalTriggerPaths}{(additionalTriggerPaths.EndsWith("*") ? "" : "/*")}");
         }
         _config.BuildFiles.AdditionalPipelinesTriggerPaths = _config.BuildFiles.AdditionalPipelinesTriggerPaths.Distinct().ToList();
 

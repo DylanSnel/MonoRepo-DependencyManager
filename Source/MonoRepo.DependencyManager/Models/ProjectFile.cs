@@ -24,12 +24,12 @@ public class ProjectFile
         get
         {
             var references = ProjectReferences.Select(pr => pr.RelativeDirectory.Replace("\\", "/").TrimEnd('/') + "/*").ToList();
-            references.Add(RelativeDirectory.Replace("\\", "/").TrimEnd('/') + "/*");
+            references.Add(RelativeDirectory.ForwardSlashes().TrimEnd('/') + "/*");
             foreach (var reference in ProjectReferences)
             {
                 references.AddRange(reference.BuildProjectReferences);
             }
-            references.AddRange(Global.Config.BuildFiles.AdditionalPipelinesTriggerPaths);
+            references.AddRange(Global.Config.BuildFiles.AdditionalPipelinesTriggerPaths.Select(x => $"/{x}"));
             return references.Distinct().Order().ToList();
         }
     }
