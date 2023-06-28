@@ -21,7 +21,7 @@ internal class InitCommand : ICommand
     [Option("build-files", Required = false, HelpText = "Enable BuildFileUpdate")]
     public bool? BuildFiles { get; set; } = null;
 
-    private readonly MonorepoConfiguration _config = Global.Config;
+    private MonorepoConfiguration _config = Global.Config;
     public void Execute()
     {
 
@@ -34,6 +34,7 @@ internal class InitCommand : ICommand
         else if (File.Exists(filePath))
         {
             Global.Config = JsonConvert.DeserializeObject<MonorepoConfiguration>(File.ReadAllText(Global.ConfigFilePath));
+            _config = Global.Config;
         }
 
         ConfigureBuildFiles();
@@ -95,7 +96,7 @@ internal class InitCommand : ICommand
             additionalTriggerPaths = additionalTriggerPaths.Replace('\\', '/').TrimEnd('/');
             _config.BuildFiles.AdditionalPipelinesTriggerPaths.Add($"{(additionalTriggerPaths.StartsWith("/") ? "" : "/")}{additionalTriggerPaths}{(additionalTriggerPaths.EndsWith("*") ? "" : "/*")}");
         }
-        _config.BuildFiles.AdditionalPipelinesTriggerPaths = _config.BuildFiles.AdditionalPipelinesFileExtension.Distinct().ToList();
+        _config.BuildFiles.AdditionalPipelinesTriggerPaths = _config.BuildFiles.AdditionalPipelinesTriggerPaths.Distinct().ToList();
 
         string additionalPipelines;
         while ((additionalPipelines = Cli.AskFor<string>("You you want to add an additional file extensions to include that do not fall under a project? ( *.<MyExtension>.yaml ) [Leave empty to continue]")) != string.Empty)

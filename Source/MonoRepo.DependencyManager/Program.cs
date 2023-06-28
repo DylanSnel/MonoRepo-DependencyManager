@@ -54,6 +54,7 @@ public class Program
         Global.Solutions = FileHelper.GetFilesByType(Global.RootPath, "*.sln").Select(csproj => new SolutionFile(csproj)).ToList();
         ColorConsole.WriteEmbeddedColorLine($"Found [magenta]{Global.Solutions.Count}[/magenta] Solutions");
         ColorConsole.WriteEmbeddedColorLine($"Found [yellow]{Global.Solutions.SelectMany(x => x.Projects).SelectMany(x => x.BuildProjectReferences).Distinct().Count()}[/yellow] Projects");
+
         ColorConsole.WriteEmbeddedColorLine("");
     }
 
@@ -62,6 +63,7 @@ public class Program
         if (File.Exists(Global.ConfigFilePath))
         {
             Global.Config = JsonConvert.DeserializeObject<MonorepoConfiguration>(File.ReadAllText(Global.ConfigFilePath));
+            Global.Solutions = FileHelper.GetFilesByType(Global.RootPath, "*.sln").Select(csproj => new SolutionFile(csproj)).ToList();
             ColorConsole.WriteEmbeddedColorLine($"Congfiguration: [Green]Found[/Green]");
             if (Global.Config.AzureDevops.Enabled)
             {
