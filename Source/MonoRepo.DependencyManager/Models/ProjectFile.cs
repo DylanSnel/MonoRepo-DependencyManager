@@ -29,7 +29,7 @@ public class ProjectFile
             {
                 references.AddRange(reference.BuildProjectReferences);
             }
-            references.AddRange(Global.Config.BuildFiles.AdditionalPipelinesTriggerPaths.Select(x => $"/{x}"));
+            references.AddRange(Global.Config.BuildFiles.AdditionalPipelinesTriggerPaths);
             return references.Distinct().Order().ToList();
         }
     }
