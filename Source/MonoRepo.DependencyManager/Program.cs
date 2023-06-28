@@ -119,4 +119,5 @@ public static class Global
     public static MonorepoConfiguration Config { get; set; } = new();
     public static List<SolutionFile> Solutions { get; set; } = new List<SolutionFile>();
     public static string CurrentBranch { get; internal set; }
+    public static string PersonalAccessToken { get; internal set; }
 }

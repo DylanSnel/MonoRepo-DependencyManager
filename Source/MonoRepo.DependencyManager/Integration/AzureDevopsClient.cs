@@ -3,6 +3,7 @@ using Microsoft.TeamFoundation.Core.WebApi;
 using Microsoft.TeamFoundation.DistributedTask.WebApi;
 using Microsoft.TeamFoundation.Policy.WebApi;
 using Microsoft.TeamFoundation.SourceControl.WebApi;
+using Microsoft.VisualStudio.Services.Common;
 using Microsoft.VisualStudio.Services.OAuth;
 using Microsoft.VisualStudio.Services.WebApi;
 using MonoRepo.DependencyManager.Helpers;
@@ -30,23 +31,37 @@ internal class AzureDevopsClient
 
     public void ResetConnection()
     {
+        if (!string.IsNullOrEmpty(Global.PersonalAccessToken) && !string.IsNullOrEmpty(Global.Config.AzureDevops.AzureDevopsUrl))
+        {
+            var creds = new VssBasicCredential(string.Empty, Global.PersonalAccessToken);
+            _connection = new VssConnection(new Uri(Global.Config.AzureDevops.AzureDevopsUrl), creds);
+        }
         if (!string.IsNullOrEmpty(Global.DevopsAccessToken) && !string.IsNullOrEmpty(Global.Config.AzureDevops.AzureDevopsUrl))
         {
             var creds = new VssOAuthAccessTokenCredential(Global.DevopsAccessToken);
             _connection = new VssConnection(new Uri(Global.Config.AzureDevops.AzureDevopsUrl), creds);
         }
+
     }
 
 
     private VssConnection _connection;
 
-    private readonly GitRepository _repository;
-    private readonly List<BuildDefinition> _builds;
-    private readonly List<PolicyConfiguration> _policies;
-    private readonly List<TaskAgentQueue> _queues;
-    private readonly Guid _buildPolicyType = new("0609b952-1397-4640-95ec-e00a01b2c241");
+    private GitRepository _repository;
+    private List<BuildDefinition> _builds;
+    private List<PolicyConfiguration> _policies;
+    private List<TaskAgentQueue> _queues;
+    private Guid _buildPolicyType = new("0609b952-1397-4640-95ec-e00a01b2c241");
 
-    public AzureDevopsClient()
+    public AzureDevopsClient(bool init = true)
+    {
+        if (init)
+        {
+            Init();
+        }
+    }
+
+    public void Init()
     {
         _repository = GetRepository();
         _builds = GetAllBuilds();

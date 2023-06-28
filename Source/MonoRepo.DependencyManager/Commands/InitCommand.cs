@@ -117,7 +117,7 @@ internal class InitCommand : ICommand
         var checkPermissions = new CheckDevopsPermissionsCommand();
         checkPermissions.Execute();
 
-        var azureClient = new AzureDevopsClient();
+        var azureClient = new AzureDevopsClient(false);
 
 
         ColorConsole.WriteEmbeddedColorLine("");
@@ -140,7 +140,7 @@ internal class InitCommand : ICommand
             ColorConsole.WriteEmbeddedColorLine("");
             _config.AzureDevops.ProjectName = AutoPrompt.PromptForInput_Searchable("What is the name of your project? (Up/down/type)  ", projects.Select(p => p.Name).ToArray());
         }
-
+        azureClient.Init();
         var repositories = azureClient.GetRepositories();
         if (repositories.Count == 0)
         {
