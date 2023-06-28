@@ -86,7 +86,7 @@ internal class InitCommand : ICommand
         }
 
         string additionalPipelines;
-        while ((additionalPipelines = Cli.AskFor<string>("You you want to add an additional policy branch? ( *.<MyExtension>.yaml ) [Leave empty to continue]")) != string.Empty)
+        while ((additionalPipelines = Cli.AskFor<string>("You you want to add an additional file extensions to include that do not fall under a project? ( *.<MyExtension>.yaml ) [Leave empty to continue]")) != string.Empty)
         {
             _config.BuildFiles.AdditionalPipelinesFileExtension.Add($"{(additionalPipelines.StartsWith("*.") ? "" : "*.")}{additionalPipelines}");
         }
