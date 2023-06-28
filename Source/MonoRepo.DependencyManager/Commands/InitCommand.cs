@@ -140,7 +140,6 @@ internal class InitCommand : ICommand
         if (repositories.Count == 0)
         {
             ColorConsole.WriteEmbeddedColorLine("[red]No repositories found[/red]");
-            return;
         }
         else if (repositories.Count == 1)
         {

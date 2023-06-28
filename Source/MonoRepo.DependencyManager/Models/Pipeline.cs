@@ -13,7 +13,6 @@ public class Pipeline
     }
     public string FullPath { get; set; }
 
-    private readonly int _level;
 
     public string ProjectDirectory { get; }
 
@@ -52,8 +51,6 @@ public class Pipeline
 
     public void SetDependencies(List<string> depenciesPaths)
     {
-        //depenciesPaths.Insert(0, ProjectDirectory.Replace("\\", "/").TrimEnd('/') + "/*");
-
         var yaml = new YamlStream();
         using (var sr = new StreamReader(FullPath))
         {
