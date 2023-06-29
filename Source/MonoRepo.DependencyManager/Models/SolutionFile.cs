@@ -10,9 +10,8 @@ public class SolutionFile
     public SolutionFile(string path)
     {
         FullPath = path;
-        Projects = FileHelper.GetFilesByType(FullDirectory, "*.csproj").Select(csproj => new ProjectFile(csproj)).ToList();
+        Projects = FileHelper.GetFilesByType(FullDirectory, "*.csproj").Where(csproj=> !csproj.EndsWith("Tests.csproj")).Select(csproj => new ProjectFile(csproj)).ToList();
     }
-
 
     public string FullPath { get; set; }
     public List<ProjectFile> Projects { get; private set; }

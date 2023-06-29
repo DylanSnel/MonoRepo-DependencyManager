@@ -40,7 +40,6 @@ internal class AzureDevopsClient
             var creds = new VssOAuthAccessTokenCredential(Global.DevopsAccessToken);
             _connection = new VssConnection(new Uri(Global.Config.AzureDevops.AzureDevopsUrl), creds);
         }
-
     }
 
 
@@ -180,7 +179,7 @@ internal class AzureDevopsClient
                     }
 
                     policyClient.UpdatePolicyConfigurationAsync(policy, Global.Config.AzureDevops.ProjectName, policy.Id).GetAwaiter().GetResult();
-
+                    _policies = GetAllPolicies();
                     return (false, policy.IsBlocking);
                 }
             }
