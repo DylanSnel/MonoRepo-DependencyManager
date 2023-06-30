@@ -1,0 +1,52 @@
+trigger:
+  branches:
+    include:
+    - main
+
+pool: #windows pipelins mandatory
+  vmImage: windows-latest
+
+steps:
+- checkout: self
+  clean: true
+  persistCredentials: true
+
+- script: dotnet tool update --global Monorepo.DependencyManager --no-cache
+  displayName: 'Install MonoRepo DependencyMananger'
+
+- task: AzureCLI@2
+  displayName: Update MonoRepo Dependencies
+  inputs:
+    azureSubscription: 'DEVOPS-MONOREPO-DEPENDENCYMANAGER'
+    scriptType: ps
+    scriptLocation: inlineScript
+    inlineScript: |
+      MonoRepo update --pipeline
+- pwsh: |
+      $ChangedFiles = $(git status --porcelain | Measure-Object | Select-Object -expand Count)
+      if ($ChangedFiles -gt 0)
+      {   
+          if ("$(Build.Reason)" -ne "PullRequest")
+          {
+              throw "The branch is not clean."
+          }
+          Write-Output "Found $ChangedFiles changed files. Committing them"
+          
+          cd $(Build.SourcesDirectory)
+          git fetch origin
+         
+          git config --global user.email "monorepo@rgfstaffing.nl"
+          git config --global user.name "DependencyManager"
+          git fetch origin $(System.PullRequest.SourceBranch):$(System.PullRequest.SourceBranch)
+          git checkout $(System.PullRequest.SourceBranch)
+          git checkout -b tempbranch
+          git add .
+          git commit -m "fix: Update build dependencies"
+          git push origin HEAD:$(System.PullRequest.SourceBranch)
+      }
+      else
+      {
+        Write-Output "No changes found, branch is clean"       
+      }
+  displayName: 'Commit & Push Changes in buildfiles'
+
