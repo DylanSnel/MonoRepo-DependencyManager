@@ -91,7 +91,7 @@ public class UpdateCommand : ICommand
                 if (Global.Config.AzureDevops.Enabled && !Global.Config.BuildFiles.UseSeparatePolicyPipelines)
                 {
                     var branch = $"refs/heads/{Global.CurrentBranch}";
-                    var required = Global.Config.AzureDevops.Settings.MainBranch == branch || branch == "HEAD";
+                    var required = Global.Config.AzureDevops.Settings.MainBranch == branch || Global.CurrentBranch == "HEAD";
                     CreateOrUpdatePolicy(level, project, solution, pipeline, required, Global.Config.AzureDevops.Settings.MainBranch);
 
                     foreach (var policyBranch in Global.Config.AzureDevops.Settings.PolicyBranches)
@@ -115,14 +115,14 @@ public class UpdateCommand : ICommand
 
                     if (Global.Config.AzureDevops.Enabled && Global.Config.BuildFiles.UseSeparatePolicyPipelines)
                     {
-                        //var branch = $"refs/heads/{Global.CurrentBranch}";
-                        //var required = Global.Config.AzureDevops.Settings.MainBranch == branch;
-                        //CreateOrUpdatePolicy(level, project, pipeline, required, Global.Config.AzureDevops.Settings.MainBranch);
+                        var branch = $"refs/heads/{Global.CurrentBranch}";
+                        var required = Global.Config.AzureDevops.Settings.MainBranch == branch || Global.CurrentBranch == "HEAD";
+                        CreateOrUpdatePolicy(level, project, solution, pipeline, required, Global.Config.AzureDevops.Settings.MainBranch);
 
-                        //foreach (var policyBranch in Global.Config.AzureDevops.Settings.PolicyBranches)
-                        //{
-                        //    CreateOrUpdatePolicy(level, project, pipeline, required, policyBranch);
-                        //}
+                        foreach (var policyBranch in Global.Config.AzureDevops.Settings.PolicyBranches)
+                        {
+                            CreateOrUpdatePolicy(level, project, solution, pipeline, required, policyBranch);
+                        }
                     }
                 }
             }
