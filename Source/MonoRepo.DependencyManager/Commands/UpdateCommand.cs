@@ -1,10 +1,4 @@
-﻿using CommandLine;
-using MonoRepo.DependencyManager.Commands.Interfaces;
-using MonoRepo.DependencyManager.Helpers;
-using MonoRepo.DependencyManager.Integration;
-using MonoRepo.DependencyManager.Models;
-
-namespace MonoRepo.DependencyManager.Commands;
+﻿namespace MonoRepo.DependencyManager.Commands;
 
 [Verb("update", HelpText = "Add configuration file to the root repo")]
 public class UpdateCommand : ICommand
