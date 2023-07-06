@@ -8,7 +8,6 @@ using Microsoft.VisualStudio.Services.OAuth;
 using Microsoft.VisualStudio.Services.WebApi;
 using MonoRepo.DependencyManager.Helpers;
 using MonoRepo.DependencyManager.Models;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Runtime.Serialization;
 
@@ -230,7 +229,6 @@ internal class AzureDevopsClient
                     BranchFilters = new List<string>() { $"+{_repository.DefaultBranch}" },
                     PathFilters = projectReferences.Select(x => $"+/{x}").ToList()
                 });
-                var json = JsonConvert.SerializeObject(definition);
                 buildClient.CreateDefinitionAsync(definition, Global.Config.AzureDevops.ProjectName).Wait();
                 return true;
             }
@@ -242,8 +240,10 @@ internal class AzureDevopsClient
         }
         else
         {
-            if (build.Name != name)
+
+            if (build.Name != name || build.Path != solution.PipelineDirectory)
             {
+                build.Path = solution.PipelineDirectory;
                 build.Name = name;
                 buildClient.UpdateDefinitionAsync(build, Global.Config.AzureDevops.ProjectName, build.Id).Wait();
             }
