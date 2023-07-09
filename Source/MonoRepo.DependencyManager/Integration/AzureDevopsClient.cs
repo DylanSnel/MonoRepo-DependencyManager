@@ -49,7 +49,7 @@ internal class AzureDevopsClient
     private List<BuildDefinition> _builds;
     private List<PolicyConfiguration> _policies;
     private List<TaskAgentQueue> _queues;
-    private Guid _buildPolicyType = new("0609b952-1397-4640-95ec-e00a01b2c241");
+    private readonly Guid _buildPolicyType = new("0609b952-1397-4640-95ec-e00a01b2c241");
 
     public AzureDevopsClient(bool init = true)
     {
@@ -232,6 +232,7 @@ internal class AzureDevopsClient
                 });
                 var json = JsonConvert.SerializeObject(definition);
                 buildClient.CreateDefinitionAsync(definition, Global.Config.AzureDevops.ProjectName).Wait();
+                _builds = GetAllBuilds();
                 return true;
             }
             catch (Exception ex)
@@ -246,6 +247,7 @@ internal class AzureDevopsClient
             {
                 build.Name = name;
                 buildClient.UpdateDefinitionAsync(build, Global.Config.AzureDevops.ProjectName, build.Id).Wait();
+                _builds = GetAllBuilds();
             }
             return false;
         }
