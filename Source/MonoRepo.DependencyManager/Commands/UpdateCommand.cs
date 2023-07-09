@@ -91,12 +91,12 @@ public class UpdateCommand : ICommand
                 if (Global.Config.AzureDevops.Enabled && !Global.Config.BuildFiles.UseSeparatePolicyPipelines)
                 {
                     var branch = $"refs/heads/{Global.CurrentBranch}";
-                    var required = Global.Config.AzureDevops.Settings.MainBranch == branch || branch == "HEAD";
-                    CreateOrUpdatePolicy(level, project, solution, pipeline, required, Global.Config.AzureDevops.Settings.MainBranch);
+                    var required = Global.Config.AzureDevops.Settings.MainBranch == branch || Global.CurrentBranch == "HEAD";
+                    CreateOrUpdatePolicy(level, project, pipeline, required, Global.Config.AzureDevops.Settings.MainBranch);
 
                     foreach (var policyBranch in Global.Config.AzureDevops.Settings.PolicyBranches)
                     {
-                        CreateOrUpdatePolicy(level, project, solution, pipeline, required, policyBranch);
+                        CreateOrUpdatePolicy(level, project, pipeline, required, policyBranch);
                     }
                 }
             }
@@ -116,12 +116,12 @@ public class UpdateCommand : ICommand
                     if (Global.Config.AzureDevops.Enabled && Global.Config.BuildFiles.UseSeparatePolicyPipelines)
                     {
                         var branch = $"refs/heads/{Global.CurrentBranch}";
-                        var required = Global.Config.AzureDevops.Settings.MainBranch == branch || branch == "HEAD";
-                        CreateOrUpdatePolicy(level, project, solution, pipeline, required, Global.Config.AzureDevops.Settings.MainBranch);
+                        var required = Global.Config.AzureDevops.Settings.MainBranch == branch || Global.CurrentBranch == "HEAD";
+                        CreateOrUpdatePolicy(level, project, pipeline, required, Global.Config.AzureDevops.Settings.MainBranch);
 
                         foreach (var policyBranch in Global.Config.AzureDevops.Settings.PolicyBranches)
                         {
-                            CreateOrUpdatePolicy(level, project, solution, pipeline, required, policyBranch);
+                            CreateOrUpdatePolicy(level, project, pipeline, required, policyBranch);
                         }
                     }
                 }
@@ -130,7 +130,7 @@ public class UpdateCommand : ICommand
         }
     }
 
-    private bool CreateOrUpdatePolicy(int level, ProjectFile project, SolutionFile solution, Pipeline pipeline, bool required, string policyBranch)
+    private bool CreateOrUpdatePolicy(int level, ProjectFile project, Pipeline pipeline, bool required, string policyBranch)
     {
         var result = _azureClient.CreateOrUpdatePolicy(project, pipeline, policyBranch, required);
         ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}     - {policyBranch.Replace("refs/heads/", "")} {(result.Item1 ? "Policy Applied" : "Policy Updated")} {(result.Item2 ? "Required" : "Optional")}");
