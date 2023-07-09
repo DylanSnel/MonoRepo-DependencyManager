@@ -32,7 +32,7 @@ public class ProjectFile
             references.AddRange(Global.Config.BuildFiles.AdditionalPipelinesTriggerPaths);
             if (Global.Config.Docker.Enabled)
             {
-                references.Add($"!*.{Global.Config.Docker.DockerFileExtension}");
+                references.Add($"!**/*.{Global.Config.Docker.DockerFileExtension}");
 
             }
             return references.Distinct().Order().ToList();
