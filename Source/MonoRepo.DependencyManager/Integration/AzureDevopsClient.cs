@@ -136,7 +136,7 @@ internal class AzureDevopsClient
                                                     { "manualQueueOnly", false },
                                                     { "displayName", build.Name},
                                                     { "validDuration", 720.0d },
-                                                    { "filenamePatterns", project.BuildProjectReferences.Select(x=> $"/{x}") },
+                                                    { "filenamePatterns", project.BuildProjectReferences.Select(x=> $"{(x.StartsWith("!")?"":"/")}{x}") },
                                                     { "scope", new [] {scope } }
                                                 });
 
