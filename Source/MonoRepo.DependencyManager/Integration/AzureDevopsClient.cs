@@ -48,7 +48,7 @@ internal class AzureDevopsClient
     private List<BuildDefinition> _builds;
     private List<PolicyConfiguration> _policies;
     private List<TaskAgentQueue> _queues;
-    private Guid _buildPolicyType = new("0609b952-1397-4640-95ec-e00a01b2c241");
+    private readonly Guid _buildPolicyType = new("0609b952-1397-4640-95ec-e00a01b2c241");
 
     public AzureDevopsClient(bool init = true)
     {
@@ -136,7 +136,7 @@ internal class AzureDevopsClient
                                                     { "manualQueueOnly", false },
                                                     { "displayName", build.Name},
                                                     { "validDuration", 720.0d },
-                                                    { "filenamePatterns", project.BuildProjectReferences.Select(x=> $"/{x}") },
+                                                    { "filenamePatterns", project.BuildProjectReferences.Select(x=> $"{(x.StartsWith("!")?"":"/")}{x}") },
                                                     { "scope", new [] {scope } }
                                                 });
 
@@ -230,6 +230,7 @@ internal class AzureDevopsClient
                     PathFilters = projectReferences.Select(x => $"+/{x}").ToList()
                 });
                 buildClient.CreateDefinitionAsync(definition, Global.Config.AzureDevops.ProjectName).Wait();
+                _builds = GetAllBuilds();
                 return true;
             }
             catch (Exception ex)
@@ -246,6 +247,7 @@ internal class AzureDevopsClient
                 build.Path = solution.PipelineDirectory;
                 build.Name = name;
                 buildClient.UpdateDefinitionAsync(build, Global.Config.AzureDevops.ProjectName, build.Id).Wait();
+                _builds = GetAllBuilds();
             }
             return false;
         }
