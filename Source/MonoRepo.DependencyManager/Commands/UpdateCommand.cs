@@ -84,7 +84,11 @@ public class UpdateCommand : ICommand
 
                 if (Global.Config.AzureDevops.Enabled && Global.Config.AzureDevops.Settings.AutoImportBuildPipelines)
                 {
-                    var result = _azureClient.CreateOrUpdateBuildDefinition(solution, pipeline, $"{pipeline.BuildName} - {pipeline.ExtensionName}", project.BuildProjectReferences);
+                    var buidName = Global.Config.BuildFiles.UseSeparatePolicyPipelines ?
+                                        $"{pipeline.BuildName} - {pipeline.ExtensionName}"
+                                        : $"{pipeline.BuildName}";
+
+                    var result = _azureClient.CreateOrUpdateBuildDefinition(solution, pipeline, buidName, project.BuildProjectReferences);
                     ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}     - {(result ? "Pipeline imported" : "Already imported")}");
                 }
 
