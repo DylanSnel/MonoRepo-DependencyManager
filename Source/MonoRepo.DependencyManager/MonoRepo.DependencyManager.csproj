@@ -8,6 +8,7 @@
     <PackageOutputPath>./nupkgs</PackageOutputPath>
     <Title>Monorepo DependencyManager</Title>
     <Authors>Dylan Snel</Authors>
+	<PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageId>MonoRepo.DependencyManager</PackageId>
     <PackageTags>MonoRepo.DependencyManager</PackageTags>
     <PackAsTool>true</PackAsTool>
