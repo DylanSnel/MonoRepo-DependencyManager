@@ -17,6 +17,8 @@
     <Compile Remove="nupkgs\**" />
     <EmbeddedResource Remove="nupkgs\**" />
     <None Remove="nupkgs\**" />
+
+	  <None Include="..\..\README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
