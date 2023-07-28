@@ -113,7 +113,7 @@ internal class AzureDevopsClient
 
     public (bool, bool) CreateOrUpdatePolicy(ProjectFile project, Pipeline buildFile, string branch, bool required)
     {
-        var build = _builds.FirstOrDefault(b => ((YamlProcess)b.Process).YamlFilename == buildFile.RelativePath.ForwardSlashes());
+        var build = _builds.FirstOrDefault(b => ((YamlProcess)b.Process).YamlFilename.ToLower() == buildFile.RelativePath.ForwardSlashes().ToLower());
         if (build != null)
         {
             try
