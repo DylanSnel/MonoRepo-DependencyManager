@@ -62,7 +62,7 @@ public class Pipeline
         var paths = (YamlMappingNode)trigger.Children[new YamlScalarNode("paths")];
         var include = (YamlSequenceNode)paths.Children[new YamlScalarNode("include")];
         include.Children.Clear();
-        foreach (var dependency in Global.BuildProps)
+        foreach (var dependency in Global.BuildProps.Where(x => RelativePath.StartsWith(Path.GetDirectoryName(x))))
         {
             include.Children.Add(new YamlScalarNode(dependency));
         }
