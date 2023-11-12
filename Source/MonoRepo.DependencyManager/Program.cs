@@ -52,7 +52,7 @@ public class Program
         ColorConsole.WriteEmbeddedColorLine($"Repository Root: [Green]{Global.RootPath}[/Green]");
         ColorConsole.WriteEmbeddedColorLine($"Current branch: [Blue]{Global.CurrentBranch}[/Blue]");
         Global.Solutions = FileHelper.GetFilesByType(Global.RootPath, "*.sln").Select(csproj => new SolutionFile(csproj)).ToList();
-        Global.BuildProps = FileHelper.GetFilesByType(Global.RootPath, "*.Build.props");
+        Global.BuildProps = FileHelper.GetFilesByType(Global.RootPath, "*.Build.props").Select(x => x.Replace(Global.RootPath, "").TrimStart('\\')).ToList();
         ColorConsole.WriteEmbeddedColorLine($"Found [magenta]{Global.Solutions.Count}[/magenta] Solutions");
         ColorConsole.WriteEmbeddedColorLine($"Found [yellow]{Global.Solutions.SelectMany(x => x.Projects).SelectMany(x => x.BuildProjectReferences).Distinct().Count()}[/yellow] Projects");
 
