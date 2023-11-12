@@ -34,6 +34,10 @@ public class DockerLogic
                 replacement.AppendLine($"COPY [\"{project.RelativePath.ForwardSlashes()}\", \"{project.RelativeDirectory.ForwardSlashes()}\"]");
             }
         }
+        foreach (var buildprops in Global.BuildProps)
+        {
+            replacement.AppendLine($"COPY [\"{buildprops.ForwardSlashes()}\", \"{buildprops.ForwardSlashes()}\"]");
+        }
         replacement.AppendLine($"RUN dotnet restore \"{projectFile.RelativePath.ForwardSlashes()}\"");
         replacement.AppendLine($"COPY . .");
         replacement.AppendLine($"WORKDIR \"/src/{projectFile.RelativeDirectory.ForwardSlashes()}\"");

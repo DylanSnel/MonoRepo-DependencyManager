@@ -52,6 +52,7 @@ public class Program
         ColorConsole.WriteEmbeddedColorLine($"Repository Root: [Green]{Global.RootPath}[/Green]");
         ColorConsole.WriteEmbeddedColorLine($"Current branch: [Blue]{Global.CurrentBranch}[/Blue]");
         Global.Solutions = FileHelper.GetFilesByType(Global.RootPath, "*.sln").Select(csproj => new SolutionFile(csproj)).ToList();
+        Global.BuildProps = FileHelper.GetFilesByType(Global.RootPath, "*.Build.props");
         ColorConsole.WriteEmbeddedColorLine($"Found [magenta]{Global.Solutions.Count}[/magenta] Solutions");
         ColorConsole.WriteEmbeddedColorLine($"Found [yellow]{Global.Solutions.SelectMany(x => x.Projects).SelectMany(x => x.BuildProjectReferences).Distinct().Count()}[/yellow] Projects");
 
@@ -118,6 +119,7 @@ public static class Global
     public static string RootPath { get; set; } = "";
     public static MonorepoConfiguration Config { get; set; } = new();
     public static List<SolutionFile> Solutions { get; set; } = new List<SolutionFile>();
+    public static List<string> BuildProps { get; set; } = new List<string>();
     public static string CurrentBranch { get; internal set; }
     public static string PersonalAccessToken { get; internal set; }
 }
