@@ -135,7 +135,7 @@ internal class AzureDevopsClient
                                                     { "queueOnSourceUpdateOnly", true },
                                                     { "manualQueueOnly", false },
                                                     { "displayName", build.Name},
-                                                    { "validDuration", 720.0d },
+                                                    { "validDuration", 0d },
                                                     { "filenamePatterns", project.BuildProjectReferences.Select(x=> $"{(x.StartsWith("!")?"":"/")}{x}") },
                                                     { "scope", new [] {scope } }
                                                 });
@@ -167,7 +167,7 @@ internal class AzureDevopsClient
                                                     { "queueOnSourceUpdateOnly", true },
                                                     { "manualQueueOnly", false },
                                                     { "displayName", build.Name},
-                                                    { "validDuration", 720.0d },
+                                                    { "validDuration", 0d },
                                                     { "filenamePatterns", project.BuildProjectReferences.Select(x=> $"/{x}") },
                                                     { "scope", new [] {scope } }
                                                 });
