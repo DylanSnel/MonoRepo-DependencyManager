@@ -132,11 +132,11 @@ internal class AzureDevopsClient
                     var settings = JObject.FromObject(new Dictionary<string, object>()
                                                 {
                                                     { "buildDefinitionId", build.Id },
-                                                    { "queueOnSourceUpdateOnly", true },
+                                                    { "queueOnSourceUpdateOnly", false },
                                                     { "manualQueueOnly", false },
                                                     { "displayName", build.Name},
                                                     { "validDuration", 0d },
-                                                    { "filenamePatterns", project.BuildProjectReferences.Select(x=> $"{(x.StartsWith("!")?"":"/")}{x}") },
+                                                    { "filenamePatterns", project.BuildProjectReferences.Select(x=> $"{(x.StartsWith('!')?"":"/")}{x}") },
                                                     { "scope", new [] {scope } }
                                                 });
 
@@ -164,7 +164,7 @@ internal class AzureDevopsClient
                     var settings = JObject.FromObject(new Dictionary<string, object>()
                                                 {
                                                     { "buildDefinitionId", build.Id },
-                                                    { "queueOnSourceUpdateOnly", true },
+                                                    { "queueOnSourceUpdateOnly", false },
                                                     { "manualQueueOnly", false },
                                                     { "displayName", build.Name},
                                                     { "validDuration", 0d },
