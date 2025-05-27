@@ -41,7 +41,6 @@ internal class AzureDevopsClient
         }
     }
 
-
     private VssConnection _connection;
 
     private GitRepository _repository;
@@ -111,7 +110,7 @@ internal class AzureDevopsClient
         return policyClient.GetPolicyConfigurationsAsync(project: Global.Config.AzureDevops.ProjectName, null, _buildPolicyType).Result;
     }
 
-    public (bool, bool) CreateOrUpdatePolicy(ProjectFile project, Pipeline buildFile, string branch, bool required)
+    public (bool?, bool) CreateOrUpdatePolicy(ProjectFile project, Pipeline buildFile, string branch, bool required)
     {
         var build = _builds.FirstOrDefault(b => ((YamlProcess)b.Process).YamlFilename.ToLower() == buildFile.RelativePath.ForwardSlashes().ToLower());
         if (build != null)
@@ -120,26 +119,31 @@ internal class AzureDevopsClient
             {
                 using var policyClient = GetClient<PolicyHttpClient>();
                 var policy = _policies.FirstOrDefault(p => p.Settings.Value<int>("buildDefinitionId") == build.Id && p.Settings.SelectToken("$..refName").ToString() == branch);
+
+                // Create the settings object that we'll use for both create and update
+                var scope = new Dictionary<string, object>()
+            {
+                {"refName", branch},
+                {"matchKind", "Exact"},
+                {"repositoryId", _repository.Id},
+            };
+
+                var filenamePatterns = project.BuildProjectReferences.Select(x => $"{(x.StartsWith('!') ? "" : "/")}{x}").ToList();
+
+                var settings = JObject.FromObject(new Dictionary<string, object>()
+            {
+                { "buildDefinitionId", build.Id },
+                { "queueOnSourceUpdateOnly", false },
+                { "manualQueueOnly", false },
+                { "displayName", build.Name},
+                { "validDuration", 0d },
+                { "filenamePatterns", filenamePatterns },
+                { "scope", new [] {scope } }
+            });
+
                 if (policy == null)
                 {
-                    var scope = new Dictionary<string, object>()
-                                                {
-                                                    {"refName", branch},
-                                                    {"matchKind", "Exact"},
-                                                    {"repositoryId", _repository.Id},
-                                                };
-
-                    var settings = JObject.FromObject(new Dictionary<string, object>()
-                                                {
-                                                    { "buildDefinitionId", build.Id },
-                                                    { "queueOnSourceUpdateOnly", false },
-                                                    { "manualQueueOnly", false },
-                                                    { "displayName", build.Name},
-                                                    { "validDuration", 0d },
-                                                    { "filenamePatterns", project.BuildProjectReferences.Select(x=> $"{(x.StartsWith('!')?"":"/")}{x}") },
-                                                    { "scope", new [] {scope } }
-                                                });
-
+                    // Create new policy
                     policy = new PolicyConfiguration()
                     {
                         IsEnabled = true,
@@ -155,31 +159,27 @@ internal class AzureDevopsClient
                 }
                 else
                 {
-                    var scope = new Dictionary<string, object>()
-                                                {
-                                                    {"refName", branch},
-                                                    {"matchKind", "Exact"},
-                                                    {"repositoryId", _repository.Id},
-                                                };
-                    var settings = JObject.FromObject(new Dictionary<string, object>()
-                                                {
-                                                    { "buildDefinitionId", build.Id },
-                                                    { "queueOnSourceUpdateOnly", false },
-                                                    { "manualQueueOnly", false },
-                                                    { "displayName", build.Name},
-                                                    { "validDuration", 0d },
-                                                    { "filenamePatterns", project.BuildProjectReferences.Select(x=> $"/{x}") },
-                                                    { "scope", new [] {scope } }
-                                                });
-                    policy.Settings = settings;
-                    if (!policy.IsBlocking)
+                    // Check if update is needed
+                    if (IsPolicyUpdateRequired(policy, settings, required))
                     {
-                        policy.IsBlocking = required;
-                    }
+                        //   ColorConsole.WriteEmbeddedColorLine($"Updating policy: [green]{policy.Id} - {build.Name}[/green]");
+                        // Update policy
+                        policy.Settings = settings;
+                        if (!policy.IsBlocking)
+                        {
+                            policy.IsBlocking = required;
+                        }
 
-                    policyClient.UpdatePolicyConfigurationAsync(policy, Global.Config.AzureDevops.ProjectName, policy.Id).GetAwaiter().GetResult();
-                    _policies = GetAllPolicies();
-                    return (false, policy.IsBlocking);
+                        policyClient.UpdatePolicyConfigurationAsync(policy, Global.Config.AzureDevops.ProjectName, policy.Id).GetAwaiter().GetResult();
+                        _policies = GetAllPolicies();
+                        return (false, policy.IsBlocking);
+                    }
+                    else
+                    {
+                        //ColorConsole.WriteEmbeddedColorLine($"No policy changes detected for: [yellow]{policy.Id} - {build.Name}[/yellow]");
+                        // No update needed - policy already has the correct settings
+                        return (null, policy.IsBlocking);
+                    }
                 }
             }
             catch (Exception ex)
@@ -192,6 +192,63 @@ internal class AzureDevopsClient
         {
             throw new Exception($"Build definition not found for: {buildFile.BuildName}");
         }
+    }
+
+    private bool IsPolicyUpdateRequired(PolicyConfiguration existingPolicy, JObject newSettings, bool requiredBlocking)
+    {
+        // Check if blocking status needs update
+        // Only upgrade from non-blocking to blocking, never downgrade
+        if (!existingPolicy.IsBlocking && requiredBlocking)
+        {
+            return true;
+        }
+
+        var existingSettings = existingPolicy.Settings;
+
+        // Check displayName
+        if (existingSettings.Value<string>("displayName") != newSettings.Value<string>("displayName"))
+            return true;
+
+        // Check boolean settings
+        if (existingSettings.Value<bool>("queueOnSourceUpdateOnly") != newSettings.Value<bool>("queueOnSourceUpdateOnly"))
+            return true;
+
+        if (existingSettings.Value<bool>("manualQueueOnly") != newSettings.Value<bool>("manualQueueOnly"))
+            return true;
+
+        // Check filenamePatterns
+        var existingPatterns = existingSettings["filenamePatterns"]?.Select(x => x.ToString()).OrderBy(x => x).ToList() ?? new List<string>();
+        var newPatterns = newSettings["filenamePatterns"]?.Select(x => x.ToString()).OrderBy(x => x).ToList() ?? new List<string>();
+
+        if (!existingPatterns.SequenceEqual(newPatterns))
+            return true;
+
+        // Check scope (repository and branch)
+        var existingScope = existingSettings["scope"]?.FirstOrDefault();
+        var newScope = newSettings["scope"]?.FirstOrDefault();
+
+        if (existingScope == null && newScope == null)
+        {
+            return false; // Both null, no update needed
+        }
+
+        if (existingScope == null || newScope == null)
+        {
+            return true; // One is null, the other isn't
+        }
+        // Compare individual properties to avoid JToken comparison issues
+        var existingRefName = existingScope.Value<string>("refName");
+        var newRefName = newScope.Value<string>("refName");
+        var existingMatchKind = existingScope.Value<string>("matchKind");
+        var newMatchKind = newScope.Value<string>("matchKind");
+
+        if (existingRefName != newRefName ||
+            existingMatchKind != newMatchKind)
+        {
+            return true;
+        }
+
+        return false; // No update required
     }
 
     public bool CreateOrUpdateBuildDefinition(SolutionFile solution, Pipeline buildFile, string name, List<string> projectReferences)

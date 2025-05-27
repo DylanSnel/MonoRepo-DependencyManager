@@ -35,7 +35,6 @@ public class UpdateCommand : ICommand
             _azureClient = new AzureDevopsClient();
         }
 
-
         foreach (var solution in Global.Solutions)
         {
             ColorConsole.WriteEmbeddedColorLine($"Solution: [magenta]{solution.SolutionName}[/magenta]");
@@ -134,10 +133,10 @@ public class UpdateCommand : ICommand
         }
     }
 
-    private bool CreateOrUpdatePolicy(int level, ProjectFile project, Pipeline pipeline, bool required, string policyBranch)
+    private void CreateOrUpdatePolicy(int level, ProjectFile project, Pipeline pipeline, bool required, string policyBranch)
     {
         var result = _azureClient.CreateOrUpdatePolicy(project, pipeline, policyBranch, required);
-        ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}     - {policyBranch.Replace("refs/heads/", "")} {(result.Item1 ? "Policy Applied" : "Policy Updated")} {(result.Item2 ? "Required" : "Optional")}");
-        return result.Item1;
+        ColorConsole.WriteEmbeddedColorLine($" {"".PadRight(level * 2)}     - {policyBranch.Replace("refs/heads/", "")} {(result.Item1.HasValue ? result.Item1.Value ? "[green]Policy Applied[/green]" : "[green]Policy Updated[/green]" : "[yellow]No update needed[/yellow]")} - {(result.Item2 ? "Required" : "Optional")}");
+        // return result.Item1;
     }
 }
